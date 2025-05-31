@@ -1,12 +1,33 @@
-Simple url to host sanitizer and validator.
+```Sanitizer``` is a simple url to host rectifier and basic format validator for domain and ip addresses.
 
 ```golang
-// ToHost takes the raw url to host; report result status and an ip flag
+// ToHost takes the raw url to host; reports status with ip conditional flag
 //
 //	handles canonical hosts as well as ipv4/6 and idna conversion to punycode
 func (s *Sanitize) ToHost(url *string) (result struct {
 	Okay, IP bool
 })
+```
+
+```TLDSanitizer``` is a simple url to host rectifier and basic format validator for domain and ip address that also reports the index locations within a domain for the tld and apex forms using the icann and public suffix private tld domains where the apex form is the effective tld+1 segment. Invalid or unregognized tld will invalidate the domain.
+
+```golang
+// ToHost takes the raw url to host; reports status with ip conditional flag
+// and sets the tld and apex form index location for domains using the icann.org
+// and publicsuffix.org private tld extentions
+//
+//	url := "blog.example.com"
+//	r := s.ToHost(&url)
+//	if r.Okay && !r.IP {
+//	 url[r.Apex:] = example.com
+//	 url[r.TLD:] = com
+//	}
+//
+//	handles canonical hosts as well as ipv4/6 and idna conversion to punycode
+func (s *TLDSanitizer) ToHost(url *string) (result struct {
+	Okay, IP  bool // status flags
+	Apex, TLD int  // index locations
+}) {
 ```
 
 testing example
