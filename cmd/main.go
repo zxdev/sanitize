@@ -21,8 +21,8 @@ func main() {
 		switch strings.TrimLeft(os.Args[1], "-") {
 		case "help":
 			fmt.Println("\nsanitize - validate list of urls")
-			fmt.Println("IP=on|only retains Ipv4/6 addresses")
-			fmt.Println("TLD=on invalidate bad tld")
+			fmt.Println("IP=on retains Ipv4/6 addresses")
+			fmt.Println("TLD=on retains bad tld")
 			return
 		default:
 			f, err := os.Open(os.Args[1])
@@ -33,13 +33,16 @@ func main() {
 		}
 	}
 
-	var hn = true
 	var ip bool
 	switch os.Getenv("IP") {
 	case "on", "true", "1":
 		ip = true
-	case "only":
-		hn = false
+		f, err := os.Open(os.Args[1])
+		if err == nil {
+			defer f.Close()
+			reader = f
+		}
+
 	}
 
 	var tld bool
@@ -57,13 +60,15 @@ func main() {
 		r := s.ToHost(&host)
 		switch {
 		case !r.Okay:
+
 		case r.IP && !ip:
 			fmt.Fprintln(invalid, host)
-		case r.IP && !hn:
+		case r.IP && ip:
 			fmt.Fprintln(writer, host)
+
 		case r.TLD == 0 && tld:
 			fmt.Fprintln(invalid, host)
-		default:
+		case r.TLD > 0:
 			fmt.Fprintln(writer, host)
 		}
 	}

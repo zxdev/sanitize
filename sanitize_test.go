@@ -54,7 +54,7 @@ func TestTLDSanitize(t *testing.T) {
 	*/
 
 	var s sanitize.TLDSanitizer
-	t.Log(s.Configure().Len())
+	t.Log(s.Configure(nil).Len())
 	for _, v := range []string{
 		"https://www.example.com:1234/path",           // normal
 		"https://www.exämple.com:1234/path",           // idan

@@ -94,13 +94,20 @@ func (s *Sanitize) ToHost(url *string) (result SanitizeResult) {
 // the standard iana.org and publicsuffix.org lists
 func NewTLDSanitizer() *TLDSanitizer {
 	var s TLDSanitizer
-	return s.Configure()
+	return s.Configure(nil)
 }
 
 // TLDSanitize structure
 type TLDSanitizer struct {
 	puny *idna.Profile
 	tld  map[string]bool
+}
+
+// Options for TLD sanitizer
+type Options struct {
+	Iana         bool
+	PublicSuffix bool
+	Source       []string
 }
 
 // Len is number of registered tld items in use in the TLDSanitizer
@@ -112,7 +119,26 @@ func (s *TLDSanitizer) Len() int { return len(s.tld) }
 //
 //	var s TLDSanitizer
 //	s.Configure("/var/url/custom")
-func (s *TLDSanitizer) Configure(a ...string) *TLDSanitizer {
+func (s *TLDSanitizer) Configure(opt *Options) *TLDSanitizer {
+
+	// default nil assumes iana, publicsuffix requsted
+	if opt == nil {
+		opt = &Options{Iana: true, PublicSuffix: true}
+	}
+
+	// use iana.org when nothing else provided
+	if !opt.Iana && !opt.PublicSuffix && len(opt.Source) == 0 {
+		opt.Iana = true
+	}
+
+	// configure opt.Source via boolean settinsg
+	if opt.Iana {
+		opt.Source = append(opt.Source, "https://data.iana.org/TLD/tlds-alpha-by-domain.txt")
+	}
+
+	if opt.PublicSuffix {
+		opt.Source = append(opt.Source, "https://data.iana.org/TLD/tlds-alpha-by-domain.txt")
+	}
 
 	if s.puny == nil {
 		s.puny = idna.New(idna.MapForLookup(), idna.Transitional(true))
@@ -131,14 +157,8 @@ func (s *TLDSanitizer) Configure(a ...string) *TLDSanitizer {
 			os.Mkdir(resource, 0744)
 		}
 
-		// add iana.org and publicsuffix.org tld lists to any others that may have been
-		// provided when calling this initialization process
-		a = append(a,
-			"https://data.iana.org/TLD/tlds-alpha-by-domain.txt",
-			"https://publicsuffix.org/list/effective_tld_names.dat")
-
-		// icann,psl combo resource loader
-		for _, item := range a {
+		// remote,local combo resource loader
+		for _, item := range opt.Source {
 			if strings.Contains(item, "://") {
 				// fetch resource when not exist or over 72h aged
 				var target = filepath.Join(resource, filepath.Base(item))
