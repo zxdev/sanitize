@@ -137,7 +137,7 @@ func (s *TLDSanitizer) Configure(opt *Options) *TLDSanitizer {
 	}
 
 	if opt.PublicSuffix {
-		opt.Source = append(opt.Source, "https://data.iana.org/TLD/tlds-alpha-by-domain.txt")
+		opt.Source = append(opt.Source, "https://publicsuffix.org/list/public_suffix_list.dat")
 	}
 
 	if s.puny == nil {
